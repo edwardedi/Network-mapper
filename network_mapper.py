@@ -56,13 +56,20 @@ def main():
     max_workers = 2 ** (32 - prefix_length) 
     print(f"Using at most {max_workers} threads")
 
+    previous_port = None
+
     with ThreadPoolExecutor(max_workers) as executor:
         thread_results = {executor.submit(scan_ip, str(ip), ports): ip for ip in network.hosts()}
         for th_result in thread_results:
             online_ports = th_result.result()
             if online_ports:
                 for port in online_ports:
-                    print(port)
+                    if previous_port == port.split(':')[0]:
+                        spaces = " " * len(previous_port)
+                        print(f"{spaces}:{port.split(':')[1]}")
+                    else:
+                        print(port)
+                    previous_port = port.split(':')[0]
 
     end_time = time.time()
     elapsed_time = end_time - start_time
