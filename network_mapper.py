@@ -52,7 +52,11 @@ def main():
     print(f"Scanning network: {cidr}")
     print(f"On ports: {ports}")
 
-    with ThreadPoolExecutor(max_workers = 800) as executor:
+    prefix_length = int(cidr.split('/')[1])
+    max_workers = 2 ** (32 - prefix_length) 
+    print(f"Using at most {max_workers} threads")
+
+    with ThreadPoolExecutor(max_workers) as executor:
         thread_results = {executor.submit(scan_ip, str(ip), ports): ip for ip in network.hosts()}
         for th_result in thread_results:
             online_ports = th_result.result()
