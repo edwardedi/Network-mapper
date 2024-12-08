@@ -1,6 +1,8 @@
 import ipaddress
 import socket
 import sys
+import time
+from concurrent.futures import ThreadPoolExecutor
 
 def scan_port(ip, port):
     try:
@@ -26,6 +28,8 @@ def scan_ip(ip, ports):
     return online_ports
 
 def main():
+    start_time = time.time()
+
     if len(sys.argv) < 2:
         print("Usage: network_mapper.py <CIDR> [port1, port2, ...]")
         sys.exit(1)
@@ -48,11 +52,18 @@ def main():
     print(f"Scanning network: {cidr}")
     print(f"On ports: {ports}")
 
-    for ip in network.hosts():
-        online_ports = scan_ip(str(ip), ports)
-        if online_ports:
-            for port in online_ports:
-                print(port)
+    with ThreadPoolExecutor(max_workers = 800) as executor:
+        thread_results = {executor.submit(scan_ip, str(ip), ports): ip for ip in network.hosts()}
+        for th_result in thread_results:
+            online_ports = th_result.result()
+            if online_ports:
+                for port in online_ports:
+                    print(port)
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+
+    print(f"Elapsed time: {round(elapsed_time,2)} seconds.")
 
 if __name__ == "__main__":
     main()
