@@ -59,7 +59,10 @@ def main():
     previous_port = None
 
     with ThreadPoolExecutor(max_workers) as executor:
-        thread_results = {executor.submit(scan_ip, str(ip), ports): ip for ip in network.hosts()}
+        thread_results = {}
+        for ip in network.hosts():
+            future = executor.submit(scan_ip, str(ip), ports)
+            thread_results[future] = ip
         for th_result in thread_results:
             online_ports = th_result.result()
             if online_ports:
